@@ -2,7 +2,15 @@ from PySide6.QtCore import QAbstractTableModel, QModelIndex, Qt
 
 
 class PropertyTableModel(QAbstractTableModel):
-    headers = ["Address", "City", "Price", "Acres", "Dream Score", "Status"]
+    headers = [
+        "Address",
+        "City",
+        "Price",
+        "Acres",
+        "Dream Score",
+        "Status",
+        "Recommendation",
+    ]
 
     def __init__(self, properties=None):
         super().__init__()
@@ -27,6 +35,7 @@ class PropertyTableModel(QAbstractTableModel):
         price = listing.asking_price if listing else 0
         status = listing.status if listing else "Unknown"
         dream_score = scores.dream_score if scores and scores.dream_score is not None else 0
+        recommendation = scores.recommendation if scores and scores.recommendation else ""
 
         if role == Qt.DisplayRole:
             if column == 0:
@@ -38,9 +47,11 @@ class PropertyTableModel(QAbstractTableModel):
             if column == 3:
                 return f"{prop.acres:.2f}"
             if column == 4:
-                return f"{dream_score:.0f}"
+                return f"{dream_score:.1f}"
             if column == 5:
                 return status
+            if column == 6:
+                return recommendation
 
         if role == Qt.UserRole:
             if column == 2:

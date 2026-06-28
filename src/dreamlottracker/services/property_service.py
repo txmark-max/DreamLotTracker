@@ -1,5 +1,6 @@
 from dreamlottracker.database.models import Listing, Property, ScoreComponent
 from dreamlottracker.repositories.property_repository import PropertyRepository
+from dreamlottracker.services.scoring_service import ScoringService
 
 
 class PropertyService:
@@ -16,6 +17,10 @@ class PropertyService:
             "dream_lots": self.repository.dream_lot_count(),
             "average_score": self.repository.average_score(),
         }
+
+    def recalculate_scores(self) -> int:
+        scoring_service = ScoringService()
+        return scoring_service.recalculate_all()
 
     def add_property(
         self,
@@ -47,7 +52,9 @@ class PropertyService:
             recommendation=self._recommendation_for_score(dream_score),
         )
 
-        return self.repository.add(prop)
+        saved = self.repository.add(prop)
+        self.recalculate_scores()
+        return saved
 
     def update_property(
         self,
@@ -81,15 +88,20 @@ class PropertyService:
         )
 
         self.repository.update(property_id, updated)
+        self.recalculate_scores()
 
     def delete_property(self, property_id: int) -> None:
         self.repository.delete(property_id)
+        self.recalculate_scores()
 
     def _recommendation_for_score(self, score: float) -> str:
         if score >= 95:
             return "Dream Lot"
+
         if score >= 90:
             return "Strong Buy"
+
         if score >= 85:
             return "Watch List"
+
         return "Pass"

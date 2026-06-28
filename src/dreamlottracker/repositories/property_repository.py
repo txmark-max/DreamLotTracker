@@ -91,8 +91,40 @@ class PropertyRepository:
                 if prop.scores:
                     prop.scores.dream_score = updated.scores.dream_score
                     prop.scores.recommendation = updated.scores.recommendation
+                    prop.scores.price_score = updated.scores.price_score
+                    prop.scores.location_score = updated.scores.location_score
+                    prop.scores.utilities_score = updated.scores.utilities_score
+                    prop.scores.flood_score = updated.scores.flood_score
+                    prop.scores.buildability_score = updated.scores.buildability_score
+                    prop.scores.restrictions_score = updated.scores.restrictions_score
                 else:
                     prop.scores = updated.scores
+
+            session.commit()
+
+    def update_scores(self, property_id: int, scores: ScoreComponent) -> None:
+        with SessionLocal() as session:
+            prop = (
+                session.query(Property)
+                .options(joinedload(Property.scores))
+                .get(property_id)
+            )
+
+            if not prop:
+                return
+
+            if not prop.scores:
+                prop.scores = ScoreComponent()
+
+            prop.scores.price_score = scores.price_score
+            prop.scores.location_score = scores.location_score
+            prop.scores.utilities_score = scores.utilities_score
+            prop.scores.flood_score = scores.flood_score
+            prop.scores.buildability_score = scores.buildability_score
+            prop.scores.restrictions_score = scores.restrictions_score
+            prop.scores.dream_score = scores.dream_score
+            prop.scores.negotiation_grade = scores.negotiation_grade
+            prop.scores.recommendation = scores.recommendation
 
             session.commit()
 
