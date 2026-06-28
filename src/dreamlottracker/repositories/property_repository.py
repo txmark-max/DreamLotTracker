@@ -15,7 +15,37 @@ class PropertyRepository:
                 .all()
             )
 
-    def count(self) -> int:
+def active_count(self) -> int:
+    with SessionLocal() as session:
+        return (
+            session.query(Property)
+            .join(Listing)
+            .filter(Listing.status == "Active")
+            .count()
+        )
+
+def dream_lot_count(self) -> int:
+    with SessionLocal() as session:
+        return (
+            session.query(Property)
+            .join(ScoreComponent)
+            .filter(ScoreComponent.dream_score >= 95)
+            .count()
+        )
+
+def average_score(self) -> float:
+    with SessionLocal() as session:
+        scores = session.query(ScoreComponent.dream_score).filter(
+            ScoreComponent.dream_score.isnot(None)
+        ).all()
+
+        if not scores:
+            return 0
+
+        return sum(score[0] for score in scores) / len(scores) 
+
+
+   def count(self) -> int:
         with SessionLocal() as session:
             return session.query(Property).count()
 
