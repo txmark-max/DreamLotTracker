@@ -54,3 +54,8 @@ class PropertyTableModel(QAbstractTableModel):
         self.beginResetModel()
         self.properties = properties
         self.endResetModel()
+
+    def property_at(self, row: int):
+        if 0 <= row < len(self.properties):
+            return self.properties[row]
+        return None

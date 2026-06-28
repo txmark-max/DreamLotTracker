@@ -17,3 +17,24 @@ class PropertyRepository:
             session.commit()
             session.refresh(property_)
             return property_
+
+    def update(self, property_id: int, updated: Property) -> None:
+        with SessionLocal() as session:
+            prop = session.query(Property).get(property_id)
+            if not prop:
+                return
+
+            prop.address = updated.address
+            prop.city = updated.city
+            prop.asking_price = updated.asking_price
+            prop.acres = updated.acres
+            prop.dream_score = updated.dream_score
+            prop.status = updated.status
+            session.commit()
+
+    def delete(self, property_id: int) -> None:
+        with SessionLocal() as session:
+            prop = session.query(Property).get(property_id)
+            if prop:
+                session.delete(prop)
+                session.commit()

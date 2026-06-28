@@ -3,6 +3,7 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QLineEdit,
+    QMessageBox,
     QPushButton,
     QTableView,
     QVBoxLayout,
@@ -32,16 +33,25 @@ class PropertiesPage(QWidget):
         add_button = QPushButton("Add Property")
         add_button.clicked.connect(self.add_property)
 
+        edit_button = QPushButton("Edit")
+        edit_button.clicked.connect(self.edit_selected_property)
+
+        delete_button = QPushButton("Delete")
+        delete_button.clicked.connect(self.delete_selected_property)
+
         header_layout.addWidget(title)
         header_layout.addStretch()
         header_layout.addWidget(self.search_box)
         header_layout.addWidget(add_button)
+        header_layout.addWidget(edit_button)
+        header_layout.addWidget(delete_button)
 
         self.table = QTableView()
         self.table.setSortingEnabled(True)
         self.table.setAlternatingRowColors(True)
         self.table.setSelectionBehavior(QTableView.SelectRows)
         self.table.setSelectionMode(QTableView.SingleSelection)
+        self.table.doubleClicked.connect(self.edit_selected_property)
 
         self.model = PropertyTableModel()
         self.proxy_model = QSortFilterProxyModel()
@@ -71,4 +81,43 @@ class PropertiesPage(QWidget):
         if dialog.exec():
             property_ = dialog.get_property()
             self.repository.add(property_)
+            self.load_properties()
+
+    def selected_property(self):
+        selected = self.table.selectionModel().selectedRows()
+        if not selected:
+            return None
+
+        proxy_index = selected[0]
+        source_index = self.proxy_model.mapToSource(proxy_index)
+        return self.model.property_at(source_index.row())
+
+    def edit_selected_property(self):
+        prop = self.selected_property()
+        if not prop:
+            QMessageBox.information(self, "No Selection", "Please select a property to edit.")
+            return
+
+        dialog = PropertyDialog(self, prop)
+
+        if dialog.exec():
+            updated = dialog.get_property()
+            self.repository.update(prop.id, updated)
+            self.load_properties()
+
+    def delete_selected_property(self):
+        prop = self.selected_property()
+        if not prop:
+            QMessageBox.information(self, "No Selection", "Please select a property to delete.")
+            return
+
+        result = QMessageBox.question(
+            self,
+            "Delete Property",
+            f"Delete {prop.address}?",
+            QMessageBox.Yes | QMessageBox.No,
+        )
+
+        if result == QMessageBox.Yes:
+            self.repository.delete(prop.id)
             self.load_properties()
