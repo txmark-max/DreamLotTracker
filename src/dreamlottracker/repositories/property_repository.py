@@ -1,11 +1,22 @@
-from dreamlottracker.database.models import Property
+from sqlalchemy.orm import joinedload
+
+from dreamlottracker.database.models import Listing, Property, ScoreComponent
 from dreamlottracker.database.session import SessionLocal
 
 
 class PropertyRepository:
     def get_all(self) -> list[Property]:
         with SessionLocal() as session:
-            return session.query(Property).order_by(Property.dream_score.desc()).all()
+            return (
+                session.query(Property)
+                .options(
+                    joinedload(Property.listings),
+                    joinedload(Property.scores),
+                )
+                .outerjoin(ScoreComponent)
+                .order_by(ScoreComponent.dream_score.desc())
+                .all()
+            )
 
     def count(self) -> int:
         with SessionLocal() as session:
@@ -26,10 +37,7 @@ class PropertyRepository:
 
             prop.address = updated.address
             prop.city = updated.city
-            prop.asking_price = updated.asking_price
             prop.acres = updated.acres
-            prop.dream_score = updated.dream_score
-            prop.status = updated.status
             session.commit()
 
     def delete(self, property_id: int) -> None:

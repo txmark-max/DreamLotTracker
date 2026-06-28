@@ -21,27 +21,34 @@ class PropertyTableModel(QAbstractTableModel):
         prop = self.properties[index.row()]
         column = index.column()
 
+        listing = prop.listings[0] if prop.listings else None
+        scores = prop.scores
+
+        price = listing.asking_price if listing else 0
+        status = listing.status if listing else "Unknown"
+        dream_score = scores.dream_score if scores and scores.dream_score is not None else 0
+
         if role == Qt.DisplayRole:
             if column == 0:
                 return prop.address
             if column == 1:
                 return prop.city
             if column == 2:
-                return f"${prop.asking_price:,.0f}"
+                return f"${price:,.0f}"
             if column == 3:
                 return f"{prop.acres:.2f}"
             if column == 4:
-                return f"{prop.dream_score:.0f}"
+                return f"{dream_score:.0f}"
             if column == 5:
-                return prop.status
+                return status
 
         if role == Qt.UserRole:
             if column == 2:
-                return prop.asking_price
+                return price
             if column == 3:
                 return prop.acres
             if column == 4:
-                return prop.dream_score
+                return dream_score
 
         return None
 

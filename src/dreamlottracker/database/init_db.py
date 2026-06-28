@@ -1,5 +1,5 @@
 from dreamlottracker.database import Base, engine
-from dreamlottracker.database.models import Property
+from dreamlottracker.database.models import Listing, Property, ScoreComponent
 from dreamlottracker.database.session import SessionLocal
 
 
@@ -14,11 +14,34 @@ def seed_properties() -> None:
         if existing > 0:
             return
 
-        properties = [
-            Property(address="County Rd 87", city="Robertsdale", asking_price=80000, acres=1.00, dream_score=98, recommendation="Dream Lot"),
-            Property(address="Sedlack Rd", city="Silverhill", asking_price=74000, acres=0.97, dream_score=97, recommendation="Dream Lot"),
-            Property(address="Ponderosa Farm Rd", city="Robertsdale", asking_price=100000, acres=1.17, dream_score=95, recommendation="Strong Buy"),
+        seed_data = [
+            ("County Rd 87", "Robertsdale", 1.00, 80000, 98, "Dream Lot"),
+            ("Sedlack Rd", "Silverhill", 0.97, 74000, 97, "Dream Lot"),
+            ("Ponderosa Farm Rd", "Robertsdale", 1.17, 100000, 95, "Strong Buy"),
         ]
 
-        session.add_all(properties)
+        for address, city, acres, price, score, recommendation in seed_data:
+            prop = Property(
+                address=address,
+                city=city,
+                county="Baldwin",
+                state="AL",
+                acres=acres,
+            )
+
+            prop.listings.append(
+                Listing(
+                    source="Seed",
+                    status="Active",
+                    asking_price=price,
+                )
+            )
+
+            prop.scores = ScoreComponent(
+                dream_score=score,
+                recommendation=recommendation,
+            )
+
+            session.add(prop)
+
         session.commit()
