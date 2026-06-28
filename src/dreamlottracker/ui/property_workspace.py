@@ -8,6 +8,8 @@ from PySide6.QtWidgets import (
     QLineEdit,
     QMessageBox,
     QPlainTextEdit,
+    QTableWidget,
+    QTableWidgetItem,
     QTabWidget,
     QVBoxLayout,
     QWidget,
@@ -30,7 +32,7 @@ class PropertyWorkspace(QDialog):
             return
 
         self.setWindowTitle(f"Property Workspace - {self.property_.address}")
-        self.resize(800, 600)
+        self.resize(850, 650)
 
         layout = QVBoxLayout()
 
@@ -41,6 +43,7 @@ class PropertyWorkspace(QDialog):
         tabs.addTab(self._overview_tab(), "Overview")
         tabs.addTab(self._listing_tab(), "Listing")
         tabs.addTab(self._scores_tab(), "Scores")
+        tabs.addTab(self._price_history_tab(), "Price History")
         tabs.addTab(self._notes_tab(), "Notes")
 
         buttons = QDialogButtonBox(QDialogButtonBox.Save | QDialogButtonBox.Close)
@@ -123,6 +126,33 @@ class PropertyWorkspace(QDialog):
         form.addRow("Recommendation", self.recommendation)
 
         widget.setLayout(form)
+        return widget
+
+    def _price_history_tab(self) -> QWidget:
+        widget = QWidget()
+        layout = QVBoxLayout()
+
+        listing = self.property_.listings[0] if self.property_.listings else None
+        history = listing.price_history if listing else []
+
+        history = sorted(
+            history,
+            key=lambda item: item.recorded_date,
+            reverse=True,
+        )
+
+        table = QTableWidget(len(history), 3)
+        table.setHorizontalHeaderLabels(["Date", "Price", "Note"])
+
+        for row, entry in enumerate(history):
+            table.setItem(row, 0, QTableWidgetItem(entry.recorded_date.strftime("%Y-%m-%d")))
+            table.setItem(row, 1, QTableWidgetItem(f"${entry.price:,.0f}"))
+            table.setItem(row, 2, QTableWidgetItem(entry.note or ""))
+
+        table.resizeColumnsToContents()
+
+        layout.addWidget(table)
+        widget.setLayout(layout)
         return widget
 
     def _notes_tab(self) -> QWidget:

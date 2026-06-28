@@ -41,6 +41,19 @@ class Listing(Base):
     days_on_market: Mapped[int | None] = mapped_column(Integer)
 
     property = relationship("Property", back_populates="listings")
+    price_history = relationship("PriceHistory", back_populates="listing", cascade="all, delete-orphan")
+
+
+class PriceHistory(Base):
+    __tablename__ = "price_history"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    listing_id: Mapped[int] = mapped_column(ForeignKey("listings.id"))
+    price: Mapped[float] = mapped_column(Float, default=0)
+    recorded_date: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    note: Mapped[str | None] = mapped_column(Text)
+
+    listing = relationship("Listing", back_populates="price_history")
 
 
 class Utility(Base):

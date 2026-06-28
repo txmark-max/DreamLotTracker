@@ -1,6 +1,6 @@
 from sqlalchemy.orm import joinedload
 
-from dreamlottracker.database.models import Listing, Note, Property, ScoreComponent
+from dreamlottracker.database.models import Listing, Note, PriceHistory, Property, ScoreComponent
 from dreamlottracker.database.session import SessionLocal
 
 
@@ -23,7 +23,7 @@ class PropertyRepository:
             return (
                 session.query(Property)
                 .options(
-                    joinedload(Property.listings),
+                    joinedload(Property.listings).joinedload(Listing.price_history),
                     joinedload(Property.scores),
                     joinedload(Property.notes),
                 )
@@ -70,6 +70,18 @@ class PropertyRepository:
             session.add(property_)
             session.commit()
             session.refresh(property_)
+
+            if property_.listings:
+                listing = property_.listings[0]
+                session.add(
+                    PriceHistory(
+                        listing_id=listing.id,
+                        price=listing.asking_price or 0,
+                        note="Initial price",
+                    )
+                )
+                session.commit()
+
             return property_
 
     def update(self, property_id: int, updated: Property) -> None:
@@ -94,8 +106,19 @@ class PropertyRepository:
 
             if updated_listing:
                 if prop.listings:
-                    prop.listings[0].asking_price = updated_listing.asking_price
-                    prop.listings[0].status = updated_listing.status
+                    listing = prop.listings[0]
+                    old_price = listing.asking_price or 0
+                    listing.asking_price = updated_listing.asking_price
+                    listing.status = updated_listing.status
+
+                    if old_price != updated_listing.asking_price:
+                        session.add(
+                            PriceHistory(
+                                listing_id=listing.id,
+                                price=updated_listing.asking_price,
+                                note=f"Price changed from ${old_price:,.0f}",
+                            )
+                        )
                 else:
                     prop.listings.append(updated_listing)
 
@@ -187,9 +210,20 @@ class PropertyRepository:
             else:
                 listing = Listing(source="Manual")
                 prop.listings.append(listing)
+                session.flush()
 
+            old_price = listing.asking_price or 0
             listing.asking_price = asking_price
             listing.status = status
+
+            if old_price != asking_price:
+                session.add(
+                    PriceHistory(
+                        listing_id=listing.id,
+                        price=asking_price,
+                        note=f"Price changed from ${old_price:,.0f}",
+                    )
+                )
 
             if not prop.scores:
                 prop.scores = ScoreComponent()
