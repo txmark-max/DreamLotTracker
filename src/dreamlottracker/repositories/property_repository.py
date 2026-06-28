@@ -9,10 +9,7 @@ class PropertyRepository:
         with SessionLocal() as session:
             return (
                 session.query(Property)
-                .options(
-                    joinedload(Property.listings),
-                    joinedload(Property.scores),
-                )
+                .options(joinedload(Property.listings), joinedload(Property.scores))
                 .outerjoin(ScoreComponent)
                 .order_by(ScoreComponent.dream_score.desc())
                 .all()
@@ -31,13 +28,38 @@ class PropertyRepository:
 
     def update(self, property_id: int, updated: Property) -> None:
         with SessionLocal() as session:
-            prop = session.query(Property).get(property_id)
+            prop = (
+                session.query(Property)
+                .options(joinedload(Property.listings), joinedload(Property.scores))
+                .get(property_id)
+            )
             if not prop:
                 return
 
             prop.address = updated.address
             prop.city = updated.city
             prop.acres = updated.acres
+
+            updated_listing = updated.listings[0] if updated.listings else None
+            if updated_listing:
+                if prop.listings:
+                    prop.listings[0].asking_price = updated_listing.asking_price
+                    prop.listings[0].status = updated_listing.status
+                else:
+                    prop.listings.append(
+                        Listing(
+                            source="Manual",
+                            asking_price=updated_listing.asking_price,
+                            status=updated_listing.status,
+                        )
+                    )
+
+            if updated.scores:
+                if prop.scores:
+                    prop.scores.dream_score = updated.scores.dream_score
+                else:
+                    prop.scores = ScoreComponent(dream_score=updated.scores.dream_score)
+
             session.commit()
 
     def delete(self, property_id: int) -> None:

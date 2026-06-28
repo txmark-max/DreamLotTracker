@@ -8,7 +8,7 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
 )
 
-from dreamlottracker.database.models import Property
+from dreamlottracker.database.models import Listing, Property, ScoreComponent
 
 
 class PropertyDialog(QDialog):
@@ -16,6 +16,7 @@ class PropertyDialog(QDialog):
         super().__init__(parent)
 
         self.setWindowTitle("Edit Property" if property_ else "Add Property")
+        self.property_ = property_
 
         self.address = QLineEdit()
         self.city = QLineEdit()
@@ -37,12 +38,15 @@ class PropertyDialog(QDialog):
         self.status.addItems(["Active", "Pending", "Sold", "Watch", "Off Market"])
 
         if property_:
+            listing = property_.listings[0] if property_.listings else None
+            scores = property_.scores
+
             self.address.setText(property_.address)
             self.city.setText(property_.city)
-            self.price.setValue(property_.asking_price or 0)
             self.acres.setValue(property_.acres or 0)
-            self.score.setValue(property_.dream_score or 0)
-            self.status.setCurrentText(property_.status or "Active")
+            self.price.setValue(listing.asking_price if listing else 0)
+            self.score.setValue(scores.dream_score if scores and scores.dream_score else 0)
+            self.status.setCurrentText(listing.status if listing else "Active")
 
         form = QFormLayout()
         form.addRow("Address", self.address)
@@ -52,9 +56,7 @@ class PropertyDialog(QDialog):
         form.addRow("Dream Score", self.score)
         form.addRow("Status", self.status)
 
-        buttons = QDialogButtonBox(
-            QDialogButtonBox.Ok | QDialogButtonBox.Cancel
-        )
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
 
@@ -65,11 +67,24 @@ class PropertyDialog(QDialog):
         self.setLayout(layout)
 
     def get_property(self) -> Property:
-        return Property(
+        prop = Property(
             address=self.address.text().strip(),
             city=self.city.text().strip(),
-            asking_price=float(self.price.value()),
+            county="Baldwin",
+            state="AL",
             acres=float(self.acres.value()),
-            dream_score=float(self.score.value()),
-            status=self.status.currentText(),
         )
+
+        prop.listings.append(
+            Listing(
+                source="Manual",
+                status=self.status.currentText(),
+                asking_price=float(self.price.value()),
+            )
+        )
+
+        prop.scores = ScoreComponent(
+            dream_score=float(self.score.value()),
+        )
+
+        return prop
