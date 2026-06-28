@@ -8,6 +8,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from dreamlottracker.ui.compare_page import ComparePage
 from dreamlottracker.ui.dashboard_page import DashboardPage
 from dreamlottracker.ui.placeholder_page import PlaceholderPage
 from dreamlottracker.ui.properties_page import PropertiesPage
@@ -21,7 +22,7 @@ class MainWindow(QMainWindow):
         super().__init__()
 
         self.setWindowTitle(APP_NAME)
-        self.resize(1100, 700)
+        self.resize(1200, 750)
 
         self.navigation = QListWidget()
         self.navigation.setFixedWidth(180)
@@ -30,6 +31,7 @@ class MainWindow(QMainWindow):
 
         self._add_page("Dashboard", DashboardPage())
         self._add_page("Properties", PropertiesPage())
+        self._add_page("Compare", ComparePage())
         self._add_page("Financial", PlaceholderPage("Financial"))
         self._add_page("Reports", ReportsPage())
         self._add_page("Maps", PlaceholderPage("Maps"))
