@@ -16,7 +16,6 @@ class PropertyDialog(QDialog):
         super().__init__(parent)
 
         self.setWindowTitle("Edit Property" if property_ else "Add Property")
-        self.property_ = property_
 
         self.address = QLineEdit()
         self.city = QLineEdit()

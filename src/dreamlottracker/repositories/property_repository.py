@@ -79,6 +79,7 @@ class PropertyRepository:
             prop.acres = updated.acres
 
             updated_listing = updated.listings[0] if updated.listings else None
+
             if updated_listing:
                 if prop.listings:
                     prop.listings[0].asking_price = updated_listing.asking_price
@@ -98,6 +99,7 @@ class PropertyRepository:
     def delete(self, property_id: int) -> None:
         with SessionLocal() as session:
             prop = session.query(Property).get(property_id)
+
             if prop:
                 session.delete(prop)
                 session.commit()

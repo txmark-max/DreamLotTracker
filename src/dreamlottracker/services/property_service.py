@@ -44,6 +44,7 @@ class PropertyService:
 
         prop.scores = ScoreComponent(
             dream_score=dream_score,
+            recommendation=self._recommendation_for_score(dream_score),
         )
 
         return self.repository.add(prop)
@@ -76,9 +77,19 @@ class PropertyService:
 
         updated.scores = ScoreComponent(
             dream_score=dream_score,
+            recommendation=self._recommendation_for_score(dream_score),
         )
 
         self.repository.update(property_id, updated)
 
     def delete_property(self, property_id: int) -> None:
         self.repository.delete(property_id)
+
+    def _recommendation_for_score(self, score: float) -> str:
+        if score >= 95:
+            return "Dream Lot"
+        if score >= 90:
+            return "Strong Buy"
+        if score >= 85:
+            return "Watch List"
+        return "Pass"

@@ -55,6 +55,7 @@ class PropertyTableModel(QAbstractTableModel):
     def headerData(self, section, orientation, role=Qt.DisplayRole):
         if role == Qt.DisplayRole and orientation == Qt.Horizontal:
             return self.headers[section]
+
         return None
 
     def set_properties(self, properties):
@@ -65,4 +66,5 @@ class PropertyTableModel(QAbstractTableModel):
     def property_at(self, row: int):
         if 0 <= row < len(self.properties):
             return self.properties[row]
+
         return None
