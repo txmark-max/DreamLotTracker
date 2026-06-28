@@ -1,45 +1,53 @@
 from PySide6.QtWidgets import (
-    QLabel,
+    QListWidget,
+    QListWidgetItem,
+    QHBoxLayout,
     QMainWindow,
-    QVBoxLayout,
+    QStackedWidget,
+    QStatusBar,
     QWidget,
 )
 
-from dreamlottracker.version import APP_NAME, VERSION
+from dreamlottracker.ui.dashboard_page import DashboardPage
+from dreamlottracker.ui.placeholder_page import PlaceholderPage
+from dreamlottracker.ui.properties_page import PropertiesPage
+from dreamlottracker.version import APP_NAME
 
 
 class MainWindow(QMainWindow):
-
     def __init__(self):
         super().__init__()
 
         self.setWindowTitle(APP_NAME)
-        self.resize(1000, 700)
+        self.resize(1100, 700)
 
-        widget = QWidget()
+        self.navigation = QListWidget()
+        self.navigation.setFixedWidth(180)
 
-        layout = QVBoxLayout()
+        self.pages = QStackedWidget()
 
-        title = QLabel(APP_NAME)
-        title.setStyleSheet("""
-            font-size:28px;
-            font-weight:bold;
-        """)
+        self._add_page("Dashboard", DashboardPage())
+        self._add_page("Properties", PropertiesPage())
+        self._add_page("Financial", PlaceholderPage("Financial"))
+        self._add_page("Reports", PlaceholderPage("Reports"))
+        self._add_page("Maps", PlaceholderPage("Maps"))
+        self._add_page("Settings", PlaceholderPage("Settings"))
 
-        version = QLabel(VERSION)
+        self.navigation.currentRowChanged.connect(self.pages.setCurrentIndex)
+        self.navigation.setCurrentRow(0)
 
-        status = QLabel("✅ Database Connected")
+        root = QWidget()
+        layout = QHBoxLayout()
+        layout.addWidget(self.navigation)
+        layout.addWidget(self.pages)
 
-        welcome = QLabel("Welcome, Mark!")
+        root.setLayout(layout)
+        self.setCentralWidget(root)
 
-        layout.addWidget(title)
-        layout.addWidget(version)
-        layout.addSpacing(20)
-        layout.addWidget(status)
-        layout.addSpacing(20)
-        layout.addWidget(welcome)
-        layout.addStretch()
+        status = QStatusBar()
+        status.showMessage("Database Connected ✓    Ready")
+        self.setStatusBar(status)
 
-        widget.setLayout(layout)
-
-        self.setCentralWidget(widget)
+    def _add_page(self, name: str, widget: QWidget):
+        self.navigation.addItem(QListWidgetItem(name))
+        self.pages.addWidget(widget)

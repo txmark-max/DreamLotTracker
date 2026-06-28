@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dreamlottracker"
+version = "0.1.0"
+description = "Dream Lot Tracker"
+readme = "README.md"
+requires-python = ">=3.13"
+
+authors = [
+    {name = "Mark Cline"}
+]
+
+dependencies = [
+    "PySide6",
+    "SQLAlchemy",
+    "alembic",
+    "pandas",
+    "openpyxl",
+    "reportlab",
+    "simplekml",
+    "folium",
+    "requests",
+    "beautifulsoup4",
+    "lxml",
+    "python-dotenv"
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]

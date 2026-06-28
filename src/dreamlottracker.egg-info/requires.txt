@@ -1,0 +1,12 @@
+PySide6
+SQLAlchemy
+alembic
+pandas
+openpyxl
+reportlab
+simplekml
+folium
+requests
+beautifulsoup4
+lxml
+python-dotenv

@@ -1,0 +1,19 @@
+Metadata-Version: 2.4
+Name: dreamlottracker
+Version: 0.1.0
+Summary: Dream Lot Tracker
+Author: Mark Cline
+Requires-Python: >=3.13
+Description-Content-Type: text/markdown
+Requires-Dist: PySide6
+Requires-Dist: SQLAlchemy
+Requires-Dist: alembic
+Requires-Dist: pandas
+Requires-Dist: openpyxl
+Requires-Dist: reportlab
+Requires-Dist: simplekml
+Requires-Dist: folium
+Requires-Dist: requests
+Requires-Dist: beautifulsoup4
+Requires-Dist: lxml
+Requires-Dist: python-dotenv
