@@ -9,45 +9,49 @@ class PropertyRepository:
         with SessionLocal() as session:
             return (
                 session.query(Property)
-                .options(joinedload(Property.listings), joinedload(Property.scores))
+                .options(
+                    joinedload(Property.listings),
+                    joinedload(Property.scores),
+                )
                 .outerjoin(ScoreComponent)
                 .order_by(ScoreComponent.dream_score.desc())
                 .all()
             )
 
-def active_count(self) -> int:
-    with SessionLocal() as session:
-        return (
-            session.query(Property)
-            .join(Listing)
-            .filter(Listing.status == "Active")
-            .count()
-        )
-
-def dream_lot_count(self) -> int:
-    with SessionLocal() as session:
-        return (
-            session.query(Property)
-            .join(ScoreComponent)
-            .filter(ScoreComponent.dream_score >= 95)
-            .count()
-        )
-
-def average_score(self) -> float:
-    with SessionLocal() as session:
-        scores = session.query(ScoreComponent.dream_score).filter(
-            ScoreComponent.dream_score.isnot(None)
-        ).all()
-
-        if not scores:
-            return 0
-
-        return sum(score[0] for score in scores) / len(scores) 
-
-
-   def count(self) -> int:
+    def count(self) -> int:
         with SessionLocal() as session:
             return session.query(Property).count()
+
+    def active_count(self) -> int:
+        with SessionLocal() as session:
+            return (
+                session.query(Property)
+                .join(Listing)
+                .filter(Listing.status == "Active")
+                .count()
+            )
+
+    def dream_lot_count(self) -> int:
+        with SessionLocal() as session:
+            return (
+                session.query(Property)
+                .join(ScoreComponent)
+                .filter(ScoreComponent.dream_score >= 95)
+                .count()
+            )
+
+    def average_score(self) -> float:
+        with SessionLocal() as session:
+            scores = (
+                session.query(ScoreComponent.dream_score)
+                .filter(ScoreComponent.dream_score.isnot(None))
+                .all()
+            )
+
+            if not scores:
+                return 0.0
+
+            return sum(score[0] for score in scores) / len(scores)
 
     def add(self, property_: Property) -> Property:
         with SessionLocal() as session:
@@ -60,9 +64,13 @@ def average_score(self) -> float:
         with SessionLocal() as session:
             prop = (
                 session.query(Property)
-                .options(joinedload(Property.listings), joinedload(Property.scores))
+                .options(
+                    joinedload(Property.listings),
+                    joinedload(Property.scores),
+                )
                 .get(property_id)
             )
+
             if not prop:
                 return
 
@@ -76,19 +84,14 @@ def average_score(self) -> float:
                     prop.listings[0].asking_price = updated_listing.asking_price
                     prop.listings[0].status = updated_listing.status
                 else:
-                    prop.listings.append(
-                        Listing(
-                            source="Manual",
-                            asking_price=updated_listing.asking_price,
-                            status=updated_listing.status,
-                        )
-                    )
+                    prop.listings.append(updated_listing)
 
             if updated.scores:
                 if prop.scores:
                     prop.scores.dream_score = updated.scores.dream_score
+                    prop.scores.recommendation = updated.scores.recommendation
                 else:
-                    prop.scores = ScoreComponent(dream_score=updated.scores.dream_score)
+                    prop.scores = updated.scores
 
             session.commit()
 
