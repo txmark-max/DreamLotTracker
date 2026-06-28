@@ -10,7 +10,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from dreamlottracker.repositories.property_repository import PropertyRepository
+from dreamlottracker.services.property_service import PropertyService
 from dreamlottracker.ui.models.property_table_model import PropertyTableModel
 from dreamlottracker.ui.property_dialog import PropertyDialog
 
@@ -19,7 +19,7 @@ class PropertiesPage(QWidget):
     def __init__(self):
         super().__init__()
 
-        self.repository = PropertyRepository()
+        self.service = PropertyService()
 
         layout = QVBoxLayout()
         header_layout = QHBoxLayout()
@@ -54,6 +54,7 @@ class PropertiesPage(QWidget):
         self.table.doubleClicked.connect(self.edit_selected_property)
 
         self.model = PropertyTableModel()
+
         self.proxy_model = QSortFilterProxyModel()
         self.proxy_model.setSourceModel(self.model)
         self.proxy_model.setFilterCaseSensitivity(Qt.CaseInsensitive)
@@ -71,7 +72,7 @@ class PropertiesPage(QWidget):
         self.load_properties()
 
     def load_properties(self):
-        properties = self.repository.get_all()
+        properties = self.service.get_all_properties()
         self.model.set_properties(properties)
         self.table.resizeColumnsToContents()
 
@@ -80,35 +81,70 @@ class PropertiesPage(QWidget):
 
         if dialog.exec():
             property_ = dialog.get_property()
-            self.repository.add(property_)
+            listing = property_.listings[0]
+            score = property_.scores
+
+            self.service.add_property(
+                address=property_.address,
+                city=property_.city,
+                acres=property_.acres,
+                asking_price=listing.asking_price,
+                dream_score=score.dream_score,
+                status=listing.status,
+            )
+
             self.load_properties()
 
     def selected_property(self):
         selected = self.table.selectionModel().selectedRows()
+
         if not selected:
             return None
 
         proxy_index = selected[0]
         source_index = self.proxy_model.mapToSource(proxy_index)
+
         return self.model.property_at(source_index.row())
 
     def edit_selected_property(self):
         prop = self.selected_property()
+
         if not prop:
-            QMessageBox.information(self, "No Selection", "Please select a property to edit.")
+            QMessageBox.information(
+                self,
+                "No Selection",
+                "Please select a property to edit.",
+            )
             return
 
         dialog = PropertyDialog(self, prop)
 
         if dialog.exec():
             updated = dialog.get_property()
-            self.repository.update(prop.id, updated)
+            listing = updated.listings[0]
+            score = updated.scores
+
+            self.service.update_property(
+                property_id=prop.id,
+                address=updated.address,
+                city=updated.city,
+                acres=updated.acres,
+                asking_price=listing.asking_price,
+                dream_score=score.dream_score,
+                status=listing.status,
+            )
+
             self.load_properties()
 
     def delete_selected_property(self):
         prop = self.selected_property()
+
         if not prop:
-            QMessageBox.information(self, "No Selection", "Please select a property to delete.")
+            QMessageBox.information(
+                self,
+                "No Selection",
+                "Please select a property to delete.",
+            )
             return
 
         result = QMessageBox.question(
@@ -119,5 +155,5 @@ class PropertiesPage(QWidget):
         )
 
         if result == QMessageBox.Yes:
-            self.repository.delete(prop.id)
+            self.service.delete_property(prop.id)
             self.load_properties()
