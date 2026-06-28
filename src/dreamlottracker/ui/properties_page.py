@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (
 from dreamlottracker.services.property_service import PropertyService
 from dreamlottracker.ui.models.property_table_model import PropertyTableModel
 from dreamlottracker.ui.property_dialog import PropertyDialog
+from dreamlottracker.ui.property_workspace import PropertyWorkspace
 
 
 class PropertiesPage(QWidget):
@@ -33,8 +34,11 @@ class PropertiesPage(QWidget):
         add_button = QPushButton("Add Property")
         add_button.clicked.connect(self.add_property)
 
-        edit_button = QPushButton("Edit")
+        edit_button = QPushButton("Quick Edit")
         edit_button.clicked.connect(self.edit_selected_property)
+
+        workspace_button = QPushButton("Open Workspace")
+        workspace_button.clicked.connect(self.open_selected_workspace)
 
         delete_button = QPushButton("Delete")
         delete_button.clicked.connect(self.delete_selected_property)
@@ -44,6 +48,7 @@ class PropertiesPage(QWidget):
         header_layout.addWidget(self.search_box)
         header_layout.addWidget(add_button)
         header_layout.addWidget(edit_button)
+        header_layout.addWidget(workspace_button)
         header_layout.addWidget(delete_button)
 
         self.table = QTableView()
@@ -51,7 +56,7 @@ class PropertiesPage(QWidget):
         self.table.setAlternatingRowColors(True)
         self.table.setSelectionBehavior(QTableView.SelectRows)
         self.table.setSelectionMode(QTableView.SingleSelection)
-        self.table.doubleClicked.connect(self.edit_selected_property)
+        self.table.doubleClicked.connect(self.open_selected_workspace)
 
         self.model = PropertyTableModel()
 
@@ -134,6 +139,22 @@ class PropertiesPage(QWidget):
                 status=listing.status,
             )
 
+            self.load_properties()
+
+    def open_selected_workspace(self):
+        prop = self.selected_property()
+
+        if not prop:
+            QMessageBox.information(
+                self,
+                "No Selection",
+                "Please select a property to open.",
+            )
+            return
+
+        workspace = PropertyWorkspace(prop.id, self)
+
+        if workspace.exec():
             self.load_properties()
 
     def delete_selected_property(self):

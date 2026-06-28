@@ -1,6 +1,6 @@
 from sqlalchemy.orm import joinedload
 
-from dreamlottracker.database.models import Listing, Property, ScoreComponent
+from dreamlottracker.database.models import Listing, Note, Property, ScoreComponent
 from dreamlottracker.database.session import SessionLocal
 
 
@@ -16,6 +16,18 @@ class PropertyRepository:
                 .outerjoin(ScoreComponent)
                 .order_by(ScoreComponent.dream_score.desc())
                 .all()
+            )
+
+    def get_by_id(self, property_id: int) -> Property | None:
+        with SessionLocal() as session:
+            return (
+                session.query(Property)
+                .options(
+                    joinedload(Property.listings),
+                    joinedload(Property.scores),
+                    joinedload(Property.notes),
+                )
+                .get(property_id)
             )
 
     def count(self) -> int:
@@ -125,6 +137,76 @@ class PropertyRepository:
             prop.scores.dream_score = scores.dream_score
             prop.scores.negotiation_grade = scores.negotiation_grade
             prop.scores.recommendation = scores.recommendation
+
+            session.commit()
+
+    def update_workspace(
+        self,
+        property_id: int,
+        address: str,
+        city: str,
+        county: str,
+        state: str,
+        zip_code: str,
+        parcel_number: str,
+        acres: float,
+        asking_price: float,
+        status: str,
+        dream_score: float,
+        recommendation: str,
+        pros: str,
+        cons: str,
+        questions: str,
+        builder_notes: str,
+        final_recommendation: str,
+    ) -> None:
+        with SessionLocal() as session:
+            prop = (
+                session.query(Property)
+                .options(
+                    joinedload(Property.listings),
+                    joinedload(Property.scores),
+                    joinedload(Property.notes),
+                )
+                .get(property_id)
+            )
+
+            if not prop:
+                return
+
+            prop.address = address
+            prop.city = city
+            prop.county = county
+            prop.state = state
+            prop.zip_code = zip_code
+            prop.parcel_number = parcel_number
+            prop.acres = acres
+
+            if prop.listings:
+                listing = prop.listings[0]
+            else:
+                listing = Listing(source="Manual")
+                prop.listings.append(listing)
+
+            listing.asking_price = asking_price
+            listing.status = status
+
+            if not prop.scores:
+                prop.scores = ScoreComponent()
+
+            prop.scores.dream_score = dream_score
+            prop.scores.recommendation = recommendation
+
+            note = prop.notes[0] if prop.notes else None
+            if not note:
+                note = Note()
+                prop.notes.append(note)
+
+            note.pros = pros
+            note.cons = cons
+            note.questions = questions
+            note.builder_notes = builder_notes
+            note.final_recommendation = final_recommendation
 
             session.commit()
 

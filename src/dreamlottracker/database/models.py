@@ -1,4 +1,4 @@
-from datetime import datetime, date
+from datetime import datetime
 from sqlalchemy import Boolean, Date, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -25,6 +25,7 @@ class Property(Base):
 
     listings = relationship("Listing", back_populates="property", cascade="all, delete-orphan")
     scores = relationship("ScoreComponent", back_populates="property", uselist=False, cascade="all, delete-orphan")
+    notes = relationship("Note", back_populates="property", cascade="all, delete-orphan")
 
 
 class Listing(Base):
@@ -122,6 +123,8 @@ class Note(Base):
     questions: Mapped[str | None] = mapped_column(Text)
     builder_notes: Mapped[str | None] = mapped_column(Text)
     final_recommendation: Mapped[str | None] = mapped_column(Text)
+
+    property = relationship("Property", back_populates="notes")
 
 
 class Setting(Base):
