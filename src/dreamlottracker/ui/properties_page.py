@@ -1,6 +1,17 @@
-from PySide6.QtWidgets import QLabel, QPushButton, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import (
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QPushButton,
+    QTableView,
+    QVBoxLayout,
+    QWidget,
+)
+from PySide6.QtCore import QSortFilterProxyModel
 
 from dreamlottracker.repositories.property_repository import PropertyRepository
+from dreamlottracker.ui.models.property_table_model import PropertyTableModel
 
 
 class PropertiesPage(QWidget):
@@ -11,37 +22,45 @@ class PropertiesPage(QWidget):
 
         layout = QVBoxLayout()
 
+        header_layout = QHBoxLayout()
+
         title = QLabel("Properties")
         title.setStyleSheet("font-size: 28px; font-weight: bold;")
 
+        self.search_box = QLineEdit()
+        self.search_box.setPlaceholderText("Search properties...")
+
         add_button = QPushButton("Add Property")
 
-        self.table = QTableWidget(0, 6)
-        self.table.setHorizontalHeaderLabels([
-            "Address",
-            "City",
-            "Price",
-            "Acres",
-            "Dream Score",
-            "Status",
-        ])
+        header_layout.addWidget(title)
+        header_layout.addStretch()
+        header_layout.addWidget(self.search_box)
+        header_layout.addWidget(add_button)
 
-        layout.addWidget(title)
-        layout.addWidget(add_button)
+        self.table = QTableView()
+        self.table.setSortingEnabled(True)
+        self.table.setAlternatingRowColors(True)
+        self.table.setSelectionBehavior(QTableView.SelectRows)
+        self.table.setSelectionMode(QTableView.SingleSelection)
+
+        self.model = PropertyTableModel()
+        self.proxy_model = QSortFilterProxyModel()
+        self.proxy_model.setSourceModel(self.model)
+        self.proxy_model.setFilterCaseSensitivity(Qt.CaseInsensitive)
+        self.proxy_model.setFilterKeyColumn(-1)
+
+        self.table.setModel(self.proxy_model)
+
+        layout.addLayout(header_layout)
         layout.addWidget(self.table)
 
         self.setLayout(layout)
+
+        self.search_box.textChanged.connect(self.proxy_model.setFilterFixedString)
 
         self.load_properties()
 
     def load_properties(self):
         properties = self.repository.get_all()
-        self.table.setRowCount(len(properties))
-
-        for row, prop in enumerate(properties):
-            self.table.setItem(row, 0, QTableWidgetItem(prop.address))
-            self.table.setItem(row, 1, QTableWidgetItem(prop.city))
-            self.table.setItem(row, 2, QTableWidgetItem(f"${prop.asking_price:,.0f}"))
-            self.table.setItem(row, 3, QTableWidgetItem(f"{prop.acres:.2f}"))
-            self.table.setItem(row, 4, QTableWidgetItem(f"{prop.dream_score:.0f}"))
-            self.table.setItem(row, 5, QTableWidgetItem(prop.status))
+        self.model.set_properties(properties)
+        self.table.resizeColumnsToContents()
