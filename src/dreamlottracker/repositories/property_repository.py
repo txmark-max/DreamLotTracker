@@ -10,3 +10,10 @@ class PropertyRepository:
     def count(self) -> int:
         with SessionLocal() as session:
             return session.query(Property).count()
+
+    def add(self, property_: Property) -> Property:
+        with SessionLocal() as session:
+            session.add(property_)
+            session.commit()
+            session.refresh(property_)
+            return property_

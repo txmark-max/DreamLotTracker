@@ -1,4 +1,4 @@
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QSortFilterProxyModel
 from PySide6.QtWidgets import (
     QHBoxLayout,
     QLabel,
@@ -8,10 +8,10 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from PySide6.QtCore import QSortFilterProxyModel
 
 from dreamlottracker.repositories.property_repository import PropertyRepository
 from dreamlottracker.ui.models.property_table_model import PropertyTableModel
+from dreamlottracker.ui.property_dialog import PropertyDialog
 
 
 class PropertiesPage(QWidget):
@@ -21,7 +21,6 @@ class PropertiesPage(QWidget):
         self.repository = PropertyRepository()
 
         layout = QVBoxLayout()
-
         header_layout = QHBoxLayout()
 
         title = QLabel("Properties")
@@ -31,6 +30,7 @@ class PropertiesPage(QWidget):
         self.search_box.setPlaceholderText("Search properties...")
 
         add_button = QPushButton("Add Property")
+        add_button.clicked.connect(self.add_property)
 
         header_layout.addWidget(title)
         header_layout.addStretch()
@@ -64,3 +64,11 @@ class PropertiesPage(QWidget):
         properties = self.repository.get_all()
         self.model.set_properties(properties)
         self.table.resizeColumnsToContents()
+
+    def add_property(self):
+        dialog = PropertyDialog(self)
+
+        if dialog.exec():
+            property_ = dialog.get_property()
+            self.repository.add(property_)
+            self.load_properties()
