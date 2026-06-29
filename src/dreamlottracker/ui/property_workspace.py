@@ -7,6 +7,7 @@ from PySide6.QtWidgets import (
     QTableWidget, QTableWidgetItem, QTabWidget, QVBoxLayout, QWidget,
 )
 
+from dreamlottracker.services.analysis_service import AnalysisService
 from dreamlottracker.services.file_service import FileService
 from dreamlottracker.services.property_service import PropertyService
 
@@ -17,6 +18,7 @@ class PropertyWorkspace(QDialog):
         self.property_id = property_id
         self.service = PropertyService()
         self.file_service = FileService()
+        self.analysis_service = AnalysisService()
         self.property_ = self.service.get_property(property_id)
 
         if not self.property_:
@@ -39,6 +41,7 @@ class PropertyWorkspace(QDialog):
         tabs.addTab(self._location_tab(), "Location")
         tabs.addTab(self._financial_tab(), "Financial")
         tabs.addTab(self._scores_tab(), "Scores")
+        tabs.addTab(self._analysis_tab(), "Analysis")
         tabs.addTab(self._photos_tab(), "Photos")
         tabs.addTab(self._documents_tab(), "Documents")
         tabs.addTab(self._price_history_tab(), "Price History")
@@ -140,6 +143,42 @@ class PropertyWorkspace(QDialog):
         self.recommendation = self._combo(["Dream Lot", "Strong Buy", "Watch List", "Pass"], scores.recommendation if scores and scores.recommendation else "Watch List")
         form.addRow("Dream Score", self.dream_score); form.addRow("Recommendation", self.recommendation)
         widget.setLayout(form); return widget
+
+    def _analysis_tab(self):
+        widget = QWidget()
+        layout = QVBoxLayout()
+        analysis = self.analysis_service.analyze_property(self.property_id)
+
+        summary = QLabel(analysis.summary)
+        summary.setWordWrap(True)
+        summary.setStyleSheet("font-size: 14px;")
+
+        headline = QLabel(
+            f"Recommendation: {analysis.recommendation}    "
+            f"Suggested Offer: ${analysis.suggested_offer:,.0f}    "
+            f"Max Offer: ${analysis.maximum_offer:,.0f}    "
+            f"Negotiation: {analysis.negotiation_strength}"
+        )
+        headline.setStyleSheet("font-size: 16px; font-weight: bold;")
+
+        layout.addWidget(headline)
+        layout.addWidget(summary)
+        layout.addSpacing(10)
+        layout.addWidget(self._list_section("Strengths", analysis.strengths))
+        layout.addWidget(self._list_section("Concerns", analysis.concerns))
+        layout.addWidget(self._list_section("Missing Data", analysis.missing_data))
+        layout.addWidget(self._list_section("Due Diligence", analysis.due_diligence))
+        layout.addStretch()
+
+        widget.setLayout(layout)
+        return widget
+
+    def _list_section(self, title, items):
+        box = QListWidget()
+        box.addItem(f"--- {title} ---")
+        for item in items:
+            box.addItem(f"• {item}")
+        return box
 
     def _photos_tab(self):
         widget = QWidget(); layout = QVBoxLayout()
