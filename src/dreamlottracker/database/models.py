@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import Boolean, Date, DateTime, Float, ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
@@ -26,6 +26,8 @@ class Property(Base):
     listings = relationship("Listing", back_populates="property", cascade="all, delete-orphan")
     scores = relationship("ScoreComponent", back_populates="property", uselist=False, cascade="all, delete-orphan")
     notes = relationship("Note", back_populates="property", cascade="all, delete-orphan")
+    utilities = relationship("Utility", back_populates="property", uselist=False, cascade="all, delete-orphan")
+    restrictions = relationship("Restriction", back_populates="property", uselist=False, cascade="all, delete-orphan")
 
 
 class Listing(Base):
@@ -66,7 +68,10 @@ class Utility(Base):
     public_sewer: Mapped[str | None] = mapped_column(String)
     septic_required: Mapped[bool | None] = mapped_column(Boolean)
     fiber: Mapped[str | None] = mapped_column(String)
+    natural_gas: Mapped[str | None] = mapped_column(String)
     notes: Mapped[str | None] = mapped_column(Text)
+
+    property = relationship("Property", back_populates="utilities")
 
 
 class Restriction(Base):
@@ -80,7 +85,11 @@ class Restriction(Base):
     rv_allowed: Mapped[bool | None] = mapped_column(Boolean)
     boat_allowed: Mapped[bool | None] = mapped_column(Boolean)
     livestock_allowed: Mapped[bool | None] = mapped_column(Boolean)
+    mobile_home_allowed: Mapped[bool | None] = mapped_column(Boolean)
+    barndominium_allowed: Mapped[bool | None] = mapped_column(Boolean)
     notes: Mapped[str | None] = mapped_column(Text)
+
+    property = relationship("Property", back_populates="restrictions")
 
 
 class LocationMetric(Base):

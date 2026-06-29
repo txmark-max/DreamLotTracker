@@ -1,6 +1,6 @@
 from sqlalchemy.orm import joinedload
 
-from dreamlottracker.database.models import Listing, Note, PriceHistory, Property, ScoreComponent
+from dreamlottracker.database.models import Listing, Note, PriceHistory, Property, Restriction, ScoreComponent, Utility
 from dreamlottracker.database.session import SessionLocal
 
 
@@ -9,7 +9,12 @@ class PropertyRepository:
         with SessionLocal() as session:
             return (
                 session.query(Property)
-                .options(joinedload(Property.listings), joinedload(Property.scores))
+                .options(
+                    joinedload(Property.listings),
+                    joinedload(Property.scores),
+                    joinedload(Property.utilities),
+                    joinedload(Property.restrictions),
+                )
                 .outerjoin(ScoreComponent)
                 .order_by(ScoreComponent.dream_score.desc())
                 .all()
@@ -23,6 +28,8 @@ class PropertyRepository:
                     joinedload(Property.listings).joinedload(Listing.price_history),
                     joinedload(Property.scores),
                     joinedload(Property.notes),
+                    joinedload(Property.utilities),
+                    joinedload(Property.restrictions),
                 )
                 .get(property_id)
             )
@@ -42,9 +49,7 @@ class PropertyRepository:
     def average_score(self) -> float:
         with SessionLocal() as session:
             scores = session.query(ScoreComponent.dream_score).filter(ScoreComponent.dream_score.isnot(None)).all()
-            if not scores:
-                return 0.0
-            return sum(score[0] for score in scores) / len(scores)
+            return 0.0 if not scores else sum(score[0] for score in scores) / len(scores)
 
     def add(self, property_: Property) -> Property:
         with SessionLocal() as session:
@@ -65,7 +70,6 @@ class PropertyRepository:
             prop.address = updated.address
             prop.city = updated.city
             prop.acres = updated.acres
-
             updated_listing = updated.listings[0] if updated.listings else None
             if updated_listing:
                 if prop.listings:
@@ -77,7 +81,6 @@ class PropertyRepository:
                         session.add(PriceHistory(listing_id=listing.id, price=updated_listing.asking_price, note=f"Price changed from ${old_price:,.0f}"))
                 else:
                     prop.listings.append(updated_listing)
-
             if updated.scores:
                 if prop.scores:
                     prop.scores.dream_score = updated.scores.dream_score
@@ -104,70 +107,71 @@ class PropertyRepository:
             prop.scores.recommendation = scores.recommendation
             session.commit()
 
-    def update_workspace(
-        self,
-        property_id: int,
-        address: str,
-        city: str,
-        county: str,
-        state: str,
-        zip_code: str,
-        parcel_number: str,
-        acres: float,
-        latitude: float,
-        longitude: float,
-        asking_price: float,
-        status: str,
-        dream_score: float,
-        recommendation: str,
-        pros: str,
-        cons: str,
-        questions: str,
-        builder_notes: str,
-        final_recommendation: str,
-    ) -> None:
+    def update_workspace(self, **data) -> None:
         with SessionLocal() as session:
-            prop = session.query(Property).options(joinedload(Property.listings), joinedload(Property.scores), joinedload(Property.notes)).get(property_id)
+            prop = (
+                session.query(Property)
+                .options(joinedload(Property.listings), joinedload(Property.scores), joinedload(Property.notes), joinedload(Property.utilities), joinedload(Property.restrictions))
+                .get(data["property_id"])
+            )
             if not prop:
                 return
 
-            prop.address = address
-            prop.city = city
-            prop.county = county
-            prop.state = state
-            prop.zip_code = zip_code
-            prop.parcel_number = parcel_number
-            prop.acres = acres
-            prop.latitude = latitude if latitude != 0 else None
-            prop.longitude = longitude if longitude != 0 else None
+            prop.address = data["address"]
+            prop.city = data["city"]
+            prop.county = data["county"]
+            prop.state = data["state"]
+            prop.zip_code = data["zip_code"]
+            prop.parcel_number = data["parcel_number"]
+            prop.acres = data["acres"]
+            prop.latitude = data["latitude"] if data["latitude"] != 0 else None
+            prop.longitude = data["longitude"] if data["longitude"] != 0 else None
 
-            if prop.listings:
-                listing = prop.listings[0]
-            else:
-                listing = Listing(source="Manual")
+            listing = prop.listings[0] if prop.listings else Listing(source="Manual")
+            if not prop.listings:
                 prop.listings.append(listing)
                 session.flush()
-
             old_price = listing.asking_price or 0
-            listing.asking_price = asking_price
-            listing.status = status
-            if old_price != asking_price:
-                session.add(PriceHistory(listing_id=listing.id, price=asking_price, note=f"Price changed from ${old_price:,.0f}"))
+            listing.asking_price = data["asking_price"]
+            listing.status = data["status"]
+            if old_price != data["asking_price"]:
+                session.add(PriceHistory(listing_id=listing.id, price=data["asking_price"], note=f"Price changed from ${old_price:,.0f}"))
 
             if not prop.scores:
                 prop.scores = ScoreComponent()
-            prop.scores.dream_score = dream_score
-            prop.scores.recommendation = recommendation
+            prop.scores.dream_score = data["dream_score"]
+            prop.scores.recommendation = data["recommendation"]
 
-            note = prop.notes[0] if prop.notes else None
-            if not note:
-                note = Note()
+            note = prop.notes[0] if prop.notes else Note()
+            if not prop.notes:
                 prop.notes.append(note)
-            note.pros = pros
-            note.cons = cons
-            note.questions = questions
-            note.builder_notes = builder_notes
-            note.final_recommendation = final_recommendation
+            note.pros = data["pros"]
+            note.cons = data["cons"]
+            note.questions = data["questions"]
+            note.builder_notes = data["builder_notes"]
+            note.final_recommendation = data["final_recommendation"]
+
+            if not prop.utilities:
+                prop.utilities = Utility()
+            prop.utilities.electric = data["electric"]
+            prop.utilities.county_water = data["county_water"]
+            prop.utilities.public_sewer = data["public_sewer"]
+            prop.utilities.septic_required = data["septic_required"]
+            prop.utilities.fiber = data["fiber"]
+            prop.utilities.natural_gas = data["natural_gas"]
+            prop.utilities.notes = data["utility_notes"]
+
+            if not prop.restrictions:
+                prop.restrictions = Restriction()
+            prop.restrictions.hoa = data["hoa"]
+            prop.restrictions.hoa_fee = data["hoa_fee"]
+            prop.restrictions.shop_allowed = data["shop_allowed"]
+            prop.restrictions.rv_allowed = data["rv_allowed"]
+            prop.restrictions.boat_allowed = data["boat_allowed"]
+            prop.restrictions.livestock_allowed = data["livestock_allowed"]
+            prop.restrictions.mobile_home_allowed = data["mobile_home_allowed"]
+            prop.restrictions.barndominium_allowed = data["barndominium_allowed"]
+            prop.restrictions.notes = data["restriction_notes"]
 
             session.commit()
 
