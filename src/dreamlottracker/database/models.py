@@ -28,6 +28,8 @@ class Property(Base):
     notes = relationship("Note", back_populates="property", cascade="all, delete-orphan")
     utilities = relationship("Utility", back_populates="property", uselist=False, cascade="all, delete-orphan")
     restrictions = relationship("Restriction", back_populates="property", uselist=False, cascade="all, delete-orphan")
+    location_metrics = relationship("LocationMetric", back_populates="property", uselist=False, cascade="all, delete-orphan")
+    financials = relationship("Financial", back_populates="property", uselist=False, cascade="all, delete-orphan")
 
 
 class Listing(Base):
@@ -99,10 +101,15 @@ class LocationMetric(Base):
     property_id: Mapped[int] = mapped_column(ForeignKey("properties.id"))
     miles_to_gulf_shores: Mapped[float | None] = mapped_column(Float)
     minutes_to_gulf_shores: Mapped[int | None] = mapped_column(Integer)
+    minutes_to_foley: Mapped[int | None] = mapped_column(Integer)
+    minutes_to_fairhope: Mapped[int | None] = mapped_column(Integer)
+    minutes_to_pensacola: Mapped[int | None] = mapped_column(Integer)
     flood_zone: Mapped[str | None] = mapped_column(String)
     wetlands: Mapped[str | None] = mapped_column(String)
     road_type: Mapped[str | None] = mapped_column(String)
     paved_road: Mapped[bool | None] = mapped_column(Boolean)
+
+    property = relationship("Property", back_populates="location_metrics")
 
 
 class Financial(Base):
@@ -115,6 +122,12 @@ class Financial(Base):
     maximum_offer: Mapped[float | None] = mapped_column(Float)
     annual_taxes: Mapped[float | None] = mapped_column(Float)
     estimated_site_prep: Mapped[float | None] = mapped_column(Float)
+    estimated_clearing: Mapped[float | None] = mapped_column(Float)
+    estimated_driveway: Mapped[float | None] = mapped_column(Float)
+    estimated_septic: Mapped[float | None] = mapped_column(Float)
+    estimated_utilities: Mapped[float | None] = mapped_column(Float)
+
+    property = relationship("Property", back_populates="financials")
 
 
 class ScoreComponent(Base):

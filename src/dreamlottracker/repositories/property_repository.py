@@ -1,6 +1,16 @@
 from sqlalchemy.orm import joinedload
 
-from dreamlottracker.database.models import Listing, Note, PriceHistory, Property, Restriction, ScoreComponent, Utility
+from dreamlottracker.database.models import (
+    Financial,
+    Listing,
+    LocationMetric,
+    Note,
+    PriceHistory,
+    Property,
+    Restriction,
+    ScoreComponent,
+    Utility,
+)
 from dreamlottracker.database.session import SessionLocal
 
 
@@ -14,6 +24,8 @@ class PropertyRepository:
                     joinedload(Property.scores),
                     joinedload(Property.utilities),
                     joinedload(Property.restrictions),
+                    joinedload(Property.location_metrics),
+                    joinedload(Property.financials),
                 )
                 .outerjoin(ScoreComponent)
                 .order_by(ScoreComponent.dream_score.desc())
@@ -30,6 +42,8 @@ class PropertyRepository:
                     joinedload(Property.notes),
                     joinedload(Property.utilities),
                     joinedload(Property.restrictions),
+                    joinedload(Property.location_metrics),
+                    joinedload(Property.financials),
                 )
                 .get(property_id)
             )
@@ -111,7 +125,15 @@ class PropertyRepository:
         with SessionLocal() as session:
             prop = (
                 session.query(Property)
-                .options(joinedload(Property.listings), joinedload(Property.scores), joinedload(Property.notes), joinedload(Property.utilities), joinedload(Property.restrictions))
+                .options(
+                    joinedload(Property.listings),
+                    joinedload(Property.scores),
+                    joinedload(Property.notes),
+                    joinedload(Property.utilities),
+                    joinedload(Property.restrictions),
+                    joinedload(Property.location_metrics),
+                    joinedload(Property.financials),
+                )
                 .get(data["property_id"])
             )
             if not prop:
@@ -172,6 +194,30 @@ class PropertyRepository:
             prop.restrictions.mobile_home_allowed = data["mobile_home_allowed"]
             prop.restrictions.barndominium_allowed = data["barndominium_allowed"]
             prop.restrictions.notes = data["restriction_notes"]
+
+            if not prop.location_metrics:
+                prop.location_metrics = LocationMetric()
+            prop.location_metrics.miles_to_gulf_shores = data["miles_to_gulf_shores"]
+            prop.location_metrics.minutes_to_gulf_shores = data["minutes_to_gulf_shores"]
+            prop.location_metrics.minutes_to_foley = data["minutes_to_foley"]
+            prop.location_metrics.minutes_to_fairhope = data["minutes_to_fairhope"]
+            prop.location_metrics.minutes_to_pensacola = data["minutes_to_pensacola"]
+            prop.location_metrics.flood_zone = data["flood_zone"]
+            prop.location_metrics.wetlands = data["wetlands"]
+            prop.location_metrics.road_type = data["road_type"]
+            prop.location_metrics.paved_road = data["paved_road"]
+
+            if not prop.financials:
+                prop.financials = Financial()
+            prop.financials.estimated_market_value = data["estimated_market_value"]
+            prop.financials.recommended_offer = data["recommended_offer"]
+            prop.financials.maximum_offer = data["maximum_offer"]
+            prop.financials.annual_taxes = data["annual_taxes"]
+            prop.financials.estimated_site_prep = data["estimated_site_prep"]
+            prop.financials.estimated_clearing = data["estimated_clearing"]
+            prop.financials.estimated_driveway = data["estimated_driveway"]
+            prop.financials.estimated_septic = data["estimated_septic"]
+            prop.financials.estimated_utilities = data["estimated_utilities"]
 
             session.commit()
 

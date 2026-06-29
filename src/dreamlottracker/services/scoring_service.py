@@ -20,32 +20,33 @@ class ScoringService:
         max_price = float(settings.get("max_price", 125000))
         min_acres = float(settings.get("min_acres", 0.5))
         max_acres = float(settings.get("max_acres", 2.0))
+        max_distance = float(settings.get("max_distance_miles", 45))
 
         listing = property_.listings[0] if property_.listings else None
         price = listing.asking_price if listing else 0
         status = listing.status if listing else "Unknown"
 
         price_score = self._price_score(price, max_price)
-        acreage_score = self._acreage_score(property_.acres, min_acres, max_acres)
+        location_score = self._location_score(property_, min_acres, max_acres, max_distance)
         status_score = 100 if status == "Active" else 70 if status == "Watch" else 50
         utilities_score = self._utilities_score(property_)
         restrictions_score = self._restrictions_score(property_)
-        flood_score = 80
+        flood_score = self._flood_score(property_)
         buildability_score = 80
 
         dream_score = (
-            price_score * 0.30
-            + acreage_score * 0.20
-            + status_score * 0.10
+            price_score * 0.28
+            + location_score * 0.22
+            + status_score * 0.08
             + utilities_score * 0.15
-            + flood_score * 0.10
+            + flood_score * 0.12
             + buildability_score * 0.05
             + restrictions_score * 0.10
         )
 
         return ScoreComponent(
             price_score=price_score,
-            location_score=acreage_score,
+            location_score=location_score,
             utilities_score=utilities_score,
             flood_score=flood_score,
             buildability_score=buildability_score,
@@ -67,6 +68,19 @@ class ScoringService:
         if price <= max_price * 1.25:
             return 60
         return 40
+
+    def _location_score(self, property_: Property, min_acres: float, max_acres: float, max_distance: float) -> float:
+        acreage = self._acreage_score(property_.acres, min_acres, max_acres)
+        location = property_.location_metrics
+        if not location or not location.miles_to_gulf_shores:
+            distance = 75
+        elif location.miles_to_gulf_shores <= max_distance:
+            distance = 100
+        elif location.miles_to_gulf_shores <= max_distance * 1.15:
+            distance = 75
+        else:
+            distance = 50
+        return round((acreage * 0.55) + (distance * 0.45), 1)
 
     def _acreage_score(self, acres: float, min_acres: float, max_acres: float) -> float:
         if acres < min_acres:
@@ -108,6 +122,20 @@ class ScoringService:
         if restrictions.mobile_home_allowed:
             score -= 10
         return max(min(score, 100), 0)
+
+    def _flood_score(self, property_: Property) -> float:
+        location = property_.location_metrics
+        if not location or not location.flood_zone:
+            return 80
+        if location.flood_zone == "X":
+            return 100
+        if location.flood_zone == "Unknown":
+            return 80
+        if location.flood_zone == "AE":
+            return 60
+        if location.flood_zone == "VE":
+            return 40
+        return 75
 
     def _recommendation_for_score(self, score: float) -> str:
         if score >= 95:
