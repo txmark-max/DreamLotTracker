@@ -119,11 +119,7 @@ class PropertiesPage(QWidget):
         prop = self.selected_property()
 
         if not prop:
-            QMessageBox.information(
-                self,
-                "No Selection",
-                "Please select a property to edit.",
-            )
+            QMessageBox.information(self, "No Selection", "Please select a property to edit.")
             return
 
         dialog = PropertyDialog(self, prop)
@@ -149,11 +145,7 @@ class PropertiesPage(QWidget):
         prop = self.selected_property()
 
         if not prop:
-            QMessageBox.information(
-                self,
-                "No Selection",
-                "Please select a property to open.",
-            )
+            QMessageBox.information(self, "No Selection", "Please select a property to open.")
             return
 
         workspace = PropertyWorkspace(prop.id, self)
@@ -165,11 +157,7 @@ class PropertiesPage(QWidget):
         prop = self.selected_property()
 
         if not prop:
-            QMessageBox.information(
-                self,
-                "No Selection",
-                "Please select a property to delete.",
-            )
+            QMessageBox.information(self, "No Selection", "Please select a property to delete.")
             return
 
         result = QMessageBox.question(
