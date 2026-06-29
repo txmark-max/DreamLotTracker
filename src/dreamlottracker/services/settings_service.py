@@ -17,13 +17,23 @@ class SettingsService:
         "max_hoa": ("0", "Maximum HOA amount preferred"),
         "minimum_dream_score": ("85", "Minimum Dream Score for watch list"),
 
-        # Dream Engine weights. These should total roughly 100, but the engine normalizes them.
         "weight_price": ("28", "Dream Score weight for price/value"),
         "weight_location": ("22", "Dream Score weight for location/drive time/acreage"),
         "weight_utilities": ("15", "Dream Score weight for utility availability"),
         "weight_flood": ("12", "Dream Score weight for flood/wetlands risk"),
         "weight_restrictions": ("13", "Dream Score weight for HOA and use restrictions"),
         "weight_buildability": ("10", "Dream Score weight for buildability/site readiness"),
+
+        "ors_api_key": ("", "OpenRouteService API key"),
+
+        "destination_gulf_shores_lat": ("30.2460", "Gulf Shores destination latitude"),
+        "destination_gulf_shores_lon": ("-87.7008", "Gulf Shores destination longitude"),
+        "destination_foley_lat": ("30.4066", "Foley destination latitude"),
+        "destination_foley_lon": ("-87.6836", "Foley destination longitude"),
+        "destination_fairhope_lat": ("30.5229", "Fairhope destination latitude"),
+        "destination_fairhope_lon": ("-87.9033", "Fairhope destination longitude"),
+        "destination_pensacola_lat": ("30.4213", "Pensacola destination latitude"),
+        "destination_pensacola_lon": ("-87.2169", "Pensacola destination longitude"),
     }
 
     def __init__(self):

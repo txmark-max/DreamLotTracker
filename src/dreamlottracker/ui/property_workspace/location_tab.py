@@ -1,11 +1,16 @@
-from PySide6.QtWidgets import QFormLayout, QLabel, QWidget
+from PySide6.QtWidgets import QFormLayout, QLabel, QMessageBox, QPushButton, QWidget
 
+from dreamlottracker.services.drive_time_service import DriveTimeService
 from dreamlottracker.ui.property_workspace.form_helpers import check, combo, spin
 
 
 class LocationTab(QWidget):
     def __init__(self, property_):
         super().__init__()
+
+        self.property_ = property_
+        self.drive_time_service = DriveTimeService()
+
         loc = property_.location_metrics
 
         form = QFormLayout()
@@ -19,10 +24,14 @@ class LocationTab(QWidget):
         self.road_type = combo(["Unknown", "County", "Private", "State"], loc.road_type if loc and loc.road_type else "Unknown")
         self.paved_road = check(loc.paved_road if loc else None)
 
+        calculate_button = QPushButton("Calculate Drive Times")
+        calculate_button.clicked.connect(self.calculate_drive_times)
+
         form.addRow("Minutes to Gulf Shores", self.minutes_to_gulf_shores)
         form.addRow("Minutes to Foley", self.minutes_to_foley)
         form.addRow("Minutes to Fairhope", self.minutes_to_fairhope)
         form.addRow("Minutes to Pensacola", self.minutes_to_pensacola)
+        form.addRow("", calculate_button)
         form.addRow("Flood Zone", self.flood_zone)
         form.addRow("Wetlands", self.wetlands)
         form.addRow("Road Type", self.road_type)
@@ -38,6 +47,27 @@ class LocationTab(QWidget):
         form.addRow("", note)
 
         self.setLayout(form)
+
+    def calculate_drive_times(self):
+        try:
+            result = self.drive_time_service.calculate_drive_times(
+                latitude=self.property_.latitude,
+                longitude=self.property_.longitude,
+            )
+        except Exception as error:
+            QMessageBox.critical(self, "Drive Time Error", str(error))
+            return
+
+        self.minutes_to_gulf_shores.setValue(result.get("gulf_shores", 0))
+        self.minutes_to_foley.setValue(result.get("foley", 0))
+        self.minutes_to_fairhope.setValue(result.get("fairhope", 0))
+        self.minutes_to_pensacola.setValue(result.get("pensacola", 0))
+
+        QMessageBox.information(
+            self,
+            "Drive Times Calculated",
+            "Drive times were calculated. Click Save to store them with this property.",
+        )
 
     def values(self):
         return {

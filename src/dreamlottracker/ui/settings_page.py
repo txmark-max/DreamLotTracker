@@ -24,7 +24,7 @@ class SettingsPage(QWidget):
         title = QLabel("Settings")
         title.setStyleSheet("font-size: 28px; font-weight: bold;")
 
-        subtitle = QLabel("Search criteria and Dream Engine scoring preferences")
+        subtitle = QLabel("Search criteria, Dream Engine weights, and drive-time automation")
         subtitle.setStyleSheet("font-size: 14px; color: gray;")
 
         scroll = QScrollArea()
@@ -77,6 +77,39 @@ class SettingsPage(QWidget):
         scoring_form.addRow("Restrictions Weight", self.weight_restrictions)
         scoring_form.addRow("Buildability Weight", self.weight_buildability)
 
+        drive_title = QLabel("Drive Time Automation")
+        drive_title.setStyleSheet("font-size: 18px; font-weight: bold;")
+
+        self.ors_api_key = QLineEdit()
+        self.ors_api_key.setEchoMode(QLineEdit.Password)
+
+        self.destination_gulf_shores_lat = self._coordinate()
+        self.destination_gulf_shores_lon = self._coordinate()
+        self.destination_foley_lat = self._coordinate()
+        self.destination_foley_lon = self._coordinate()
+        self.destination_fairhope_lat = self._coordinate()
+        self.destination_fairhope_lon = self._coordinate()
+        self.destination_pensacola_lat = self._coordinate()
+        self.destination_pensacola_lon = self._coordinate()
+
+        drive_note = QLabel(
+            "OpenRouteService is used for drive-time calculations. Destination coordinates are editable "
+            "so you can target specific places like the beach, courthouse, airport, or downtown."
+        )
+        drive_note.setWordWrap(True)
+        drive_note.setStyleSheet("color: gray; font-style: italic;")
+
+        drive_form = QFormLayout()
+        drive_form.addRow("OpenRouteService API Key", self.ors_api_key)
+        drive_form.addRow("Gulf Shores Latitude", self.destination_gulf_shores_lat)
+        drive_form.addRow("Gulf Shores Longitude", self.destination_gulf_shores_lon)
+        drive_form.addRow("Foley Latitude", self.destination_foley_lat)
+        drive_form.addRow("Foley Longitude", self.destination_foley_lon)
+        drive_form.addRow("Fairhope Latitude", self.destination_fairhope_lat)
+        drive_form.addRow("Fairhope Longitude", self.destination_fairhope_lon)
+        drive_form.addRow("Pensacola Latitude", self.destination_pensacola_lat)
+        drive_form.addRow("Pensacola Longitude", self.destination_pensacola_lon)
+
         save_button = QPushButton("Save Settings")
         save_button.clicked.connect(self.save)
 
@@ -88,6 +121,10 @@ class SettingsPage(QWidget):
         layout.addSpacing(18)
         layout.addWidget(scoring_title)
         layout.addLayout(scoring_form)
+        layout.addSpacing(18)
+        layout.addWidget(drive_title)
+        layout.addWidget(drive_note)
+        layout.addLayout(drive_form)
         layout.addSpacing(18)
         layout.addWidget(save_button)
         layout.addWidget(self.status)
@@ -125,6 +162,17 @@ class SettingsPage(QWidget):
         self.weight_restrictions.setValue(int(float(settings.get("weight_restrictions", "13"))))
         self.weight_buildability.setValue(int(float(settings.get("weight_buildability", "10"))))
 
+        self.ors_api_key.setText(settings.get("ors_api_key", ""))
+
+        self.destination_gulf_shores_lat.setValue(float(settings.get("destination_gulf_shores_lat", "30.2460")))
+        self.destination_gulf_shores_lon.setValue(float(settings.get("destination_gulf_shores_lon", "-87.7008")))
+        self.destination_foley_lat.setValue(float(settings.get("destination_foley_lat", "30.4066")))
+        self.destination_foley_lon.setValue(float(settings.get("destination_foley_lon", "-87.6836")))
+        self.destination_fairhope_lat.setValue(float(settings.get("destination_fairhope_lat", "30.5229")))
+        self.destination_fairhope_lon.setValue(float(settings.get("destination_fairhope_lon", "-87.9033")))
+        self.destination_pensacola_lat.setValue(float(settings.get("destination_pensacola_lat", "30.4213")))
+        self.destination_pensacola_lon.setValue(float(settings.get("destination_pensacola_lon", "-87.2169")))
+
     def save(self):
         self.service.save_settings(
             {
@@ -144,27 +192,42 @@ class SettingsPage(QWidget):
                 "weight_flood": str(self.weight_flood.value()),
                 "weight_restrictions": str(self.weight_restrictions.value()),
                 "weight_buildability": str(self.weight_buildability.value()),
+                "ors_api_key": self.ors_api_key.text().strip(),
+                "destination_gulf_shores_lat": str(self.destination_gulf_shores_lat.value()),
+                "destination_gulf_shores_lon": str(self.destination_gulf_shores_lon.value()),
+                "destination_foley_lat": str(self.destination_foley_lat.value()),
+                "destination_foley_lon": str(self.destination_foley_lon.value()),
+                "destination_fairhope_lat": str(self.destination_fairhope_lat.value()),
+                "destination_fairhope_lon": str(self.destination_fairhope_lon.value()),
+                "destination_pensacola_lat": str(self.destination_pensacola_lat.value()),
+                "destination_pensacola_lon": str(self.destination_pensacola_lon.value()),
             }
         )
 
-        self.status.setText("Settings saved. Recalculate scores on the Dashboard to apply changes.")
+        self.status.setText("Settings saved.")
 
     def _money(self):
-        spin = QDoubleSpinBox()
-        spin.setMaximum(100_000_000)
-        spin.setPrefix("$")
-        spin.setDecimals(0)
-        return spin
+        widget = QDoubleSpinBox()
+        widget.setMaximum(100_000_000)
+        widget.setPrefix("$")
+        widget.setDecimals(0)
+        return widget
 
     def _double(self):
-        spin = QDoubleSpinBox()
-        spin.setMaximum(1000)
-        spin.setDecimals(2)
-        return spin
+        widget = QDoubleSpinBox()
+        widget.setMaximum(1000)
+        widget.setDecimals(2)
+        return widget
+
+    def _coordinate(self):
+        widget = QDoubleSpinBox()
+        widget.setRange(-180, 180)
+        widget.setDecimals(6)
+        return widget
 
     def _integer(self, suffix: str = ""):
-        spin = QSpinBox()
-        spin.setMaximum(10000)
+        widget = QSpinBox()
+        widget.setMaximum(10000)
         if suffix:
-            spin.setSuffix(suffix)
-        return spin
+            widget.setSuffix(suffix)
+        return widget
