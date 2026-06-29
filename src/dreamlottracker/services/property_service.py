@@ -59,6 +59,50 @@ class PropertyService:
         self.recalculate_scores()
         return saved
 
+    def update_property_workspace(
+        self,
+        property_id: int,
+        address: str,
+        city: str,
+        county: str,
+        state: str,
+        zip_code: str,
+        parcel_number: str,
+        acres: float,
+        latitude: float,
+        longitude: float,
+        asking_price: float,
+        status: str,
+        dream_score: float,
+        recommendation: str,
+        pros: str,
+        cons: str,
+        questions: str,
+        builder_notes: str,
+        final_recommendation: str,
+    ) -> None:
+        self.repository.update_workspace(
+            property_id=property_id,
+            address=address,
+            city=city,
+            county=county,
+            state=state,
+            zip_code=zip_code,
+            parcel_number=parcel_number,
+            acres=acres,
+            latitude=latitude,
+            longitude=longitude,
+            asking_price=asking_price,
+            status=status,
+            dream_score=dream_score,
+            recommendation=recommendation,
+            pros=pros,
+            cons=cons,
+            questions=questions,
+            builder_notes=builder_notes,
+            final_recommendation=final_recommendation,
+        )
+
     def update_property(
         self,
         property_id: int,
@@ -93,46 +137,6 @@ class PropertyService:
         self.repository.update(property_id, updated)
         self.recalculate_scores()
 
-    def update_property_workspace(
-        self,
-        property_id: int,
-        address: str,
-        city: str,
-        county: str,
-        state: str,
-        zip_code: str,
-        parcel_number: str,
-        acres: float,
-        asking_price: float,
-        status: str,
-        dream_score: float,
-        recommendation: str,
-        pros: str,
-        cons: str,
-        questions: str,
-        builder_notes: str,
-        final_recommendation: str,
-    ) -> None:
-        self.repository.update_workspace(
-            property_id=property_id,
-            address=address,
-            city=city,
-            county=county,
-            state=state,
-            zip_code=zip_code,
-            parcel_number=parcel_number,
-            acres=acres,
-            asking_price=asking_price,
-            status=status,
-            dream_score=dream_score,
-            recommendation=recommendation,
-            pros=pros,
-            cons=cons,
-            questions=questions,
-            builder_notes=builder_notes,
-            final_recommendation=final_recommendation,
-        )
-
     def delete_property(self, property_id: int) -> None:
         self.repository.delete(property_id)
         self.recalculate_scores()
@@ -140,11 +144,8 @@ class PropertyService:
     def _recommendation_for_score(self, score: float) -> str:
         if score >= 95:
             return "Dream Lot"
-
         if score >= 90:
             return "Strong Buy"
-
         if score >= 85:
             return "Watch List"
-
         return "Pass"

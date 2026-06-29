@@ -72,6 +72,16 @@ class PropertyWorkspace(QDialog):
         self.acres.setDecimals(2)
         self.acres.setValue(float(self.property_.acres or 0))
 
+        self.latitude = QDoubleSpinBox()
+        self.latitude.setRange(-90, 90)
+        self.latitude.setDecimals(6)
+        self.latitude.setValue(float(self.property_.latitude or 0))
+
+        self.longitude = QDoubleSpinBox()
+        self.longitude.setRange(-180, 180)
+        self.longitude.setDecimals(6)
+        self.longitude.setValue(float(self.property_.longitude or 0))
+
         form.addRow("Address", self.address)
         form.addRow("City", self.city)
         form.addRow("County", self.county)
@@ -79,6 +89,8 @@ class PropertyWorkspace(QDialog):
         form.addRow("ZIP", self.zip_code)
         form.addRow("Parcel Number", self.parcel_number)
         form.addRow("Acres", self.acres)
+        form.addRow("Latitude", self.latitude)
+        form.addRow("Longitude", self.longitude)
 
         widget.setLayout(form)
         return widget
@@ -188,6 +200,8 @@ class PropertyWorkspace(QDialog):
             zip_code=self.zip_code.text().strip(),
             parcel_number=self.parcel_number.text().strip(),
             acres=float(self.acres.value()),
+            latitude=float(self.latitude.value()),
+            longitude=float(self.longitude.value()),
             asking_price=float(self.asking_price.value()),
             status=self.status.currentText(),
             dream_score=float(self.dream_score.value()),
