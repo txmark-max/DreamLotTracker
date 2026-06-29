@@ -10,6 +10,7 @@ from PySide6.QtWidgets import (
 
 from dreamlottracker.ui.compare_page import ComparePage
 from dreamlottracker.ui.dashboard_page import DashboardPage
+from dreamlottracker.ui.import_page import ImportPage
 from dreamlottracker.ui.maps_page import MapsPage
 from dreamlottracker.ui.placeholder_page import PlaceholderPage
 from dreamlottracker.ui.properties_page import PropertiesPage
@@ -32,6 +33,7 @@ class MainWindow(QMainWindow):
 
         self._add_page("Dashboard", DashboardPage())
         self._add_page("Properties", PropertiesPage())
+        self._add_page("Import", ImportPage())
         self._add_page("Compare", ComparePage())
         self._add_page("Financial", PlaceholderPage("Financial"))
         self._add_page("Reports", ReportsPage())

@@ -40,6 +40,9 @@ class PropertiesPage(QWidget):
         workspace_button = QPushButton("Open Workspace")
         workspace_button.clicked.connect(self.open_selected_workspace)
 
+        refresh_button = QPushButton("Refresh")
+        refresh_button.clicked.connect(self.load_properties)
+
         delete_button = QPushButton("Delete")
         delete_button.clicked.connect(self.delete_selected_property)
 
@@ -49,6 +52,7 @@ class PropertiesPage(QWidget):
         header_layout.addWidget(add_button)
         header_layout.addWidget(edit_button)
         header_layout.addWidget(workspace_button)
+        header_layout.addWidget(refresh_button)
         header_layout.addWidget(delete_button)
 
         self.table = QTableView()
