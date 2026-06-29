@@ -30,6 +30,8 @@ class Property(Base):
     restrictions = relationship("Restriction", back_populates="property", uselist=False, cascade="all, delete-orphan")
     location_metrics = relationship("LocationMetric", back_populates="property", uselist=False, cascade="all, delete-orphan")
     financials = relationship("Financial", back_populates="property", uselist=False, cascade="all, delete-orphan")
+    photos = relationship("Photo", back_populates="property", cascade="all, delete-orphan")
+    documents = relationship("Document", back_populates="property", cascade="all, delete-orphan")
 
 
 class Listing(Base):
@@ -160,6 +162,31 @@ class Note(Base):
     final_recommendation: Mapped[str | None] = mapped_column(Text)
 
     property = relationship("Property", back_populates="notes")
+
+
+class Photo(Base):
+    __tablename__ = "photos"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    property_id: Mapped[int] = mapped_column(ForeignKey("properties.id"))
+    file_path: Mapped[str] = mapped_column(Text, nullable=False)
+    caption: Mapped[str | None] = mapped_column(Text)
+    photo_type: Mapped[str | None] = mapped_column(String)
+    taken_date: Mapped[datetime | None] = mapped_column(DateTime)
+
+    property = relationship("Property", back_populates="photos")
+
+
+class Document(Base):
+    __tablename__ = "documents"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    property_id: Mapped[int] = mapped_column(ForeignKey("properties.id"))
+    file_path: Mapped[str] = mapped_column(Text, nullable=False)
+    document_type: Mapped[str | None] = mapped_column(String)
+    notes: Mapped[str | None] = mapped_column(Text)
+
+    property = relationship("Property", back_populates="documents")
 
 
 class Setting(Base):

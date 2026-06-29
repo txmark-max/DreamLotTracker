@@ -1,9 +1,13 @@
+from pathlib import Path
+
 from PySide6.QtWidgets import (
     QCheckBox, QComboBox, QDialog, QDialogButtonBox, QDoubleSpinBox,
-    QFormLayout, QLabel, QLineEdit, QMessageBox, QPlainTextEdit,
-    QSpinBox, QTableWidget, QTableWidgetItem, QTabWidget, QVBoxLayout, QWidget,
+    QFileDialog, QFormLayout, QHBoxLayout, QLabel, QLineEdit, QListWidget,
+    QListWidgetItem, QMessageBox, QPlainTextEdit, QPushButton, QSpinBox,
+    QTableWidget, QTableWidgetItem, QTabWidget, QVBoxLayout, QWidget,
 )
 
+from dreamlottracker.services.file_service import FileService
 from dreamlottracker.services.property_service import PropertyService
 
 
@@ -12,6 +16,7 @@ class PropertyWorkspace(QDialog):
         super().__init__(parent)
         self.property_id = property_id
         self.service = PropertyService()
+        self.file_service = FileService()
         self.property_ = self.service.get_property(property_id)
 
         if not self.property_:
@@ -20,7 +25,7 @@ class PropertyWorkspace(QDialog):
             return
 
         self.setWindowTitle(f"Property Workspace - {self.property_.address}")
-        self.resize(950, 750)
+        self.resize(1000, 760)
 
         layout = QVBoxLayout()
         title = QLabel(self.property_.address)
@@ -34,6 +39,8 @@ class PropertyWorkspace(QDialog):
         tabs.addTab(self._location_tab(), "Location")
         tabs.addTab(self._financial_tab(), "Financial")
         tabs.addTab(self._scores_tab(), "Scores")
+        tabs.addTab(self._photos_tab(), "Photos")
+        tabs.addTab(self._documents_tab(), "Documents")
         tabs.addTab(self._price_history_tab(), "Price History")
         tabs.addTab(self._notes_tab(), "Notes")
 
@@ -134,6 +141,34 @@ class PropertyWorkspace(QDialog):
         form.addRow("Dream Score", self.dream_score); form.addRow("Recommendation", self.recommendation)
         widget.setLayout(form); return widget
 
+    def _photos_tab(self):
+        widget = QWidget(); layout = QVBoxLayout()
+        self.photo_list = QListWidget()
+        for photo in self.property_.photos:
+            item = QListWidgetItem(f"{Path(photo.file_path).name} — {photo.photo_type or ''} — {photo.caption or ''}")
+            item.setData(1000, photo.id); item.setData(1001, photo.file_path)
+            self.photo_list.addItem(item)
+        buttons = QHBoxLayout()
+        add_button = QPushButton("Add Photo"); add_button.clicked.connect(self.add_photo)
+        open_button = QPushButton("Open Selected"); open_button.clicked.connect(lambda: self.open_selected_file(self.photo_list))
+        delete_button = QPushButton("Remove Selected"); delete_button.clicked.connect(lambda: self.delete_selected_photo())
+        buttons.addWidget(add_button); buttons.addWidget(open_button); buttons.addWidget(delete_button)
+        layout.addWidget(self.photo_list); layout.addLayout(buttons); widget.setLayout(layout); return widget
+
+    def _documents_tab(self):
+        widget = QWidget(); layout = QVBoxLayout()
+        self.document_list = QListWidget()
+        for document in self.property_.documents:
+            item = QListWidgetItem(f"{Path(document.file_path).name} — {document.document_type or ''} — {document.notes or ''}")
+            item.setData(1000, document.id); item.setData(1001, document.file_path)
+            self.document_list.addItem(item)
+        buttons = QHBoxLayout()
+        add_button = QPushButton("Add Document"); add_button.clicked.connect(self.add_document)
+        open_button = QPushButton("Open Selected"); open_button.clicked.connect(lambda: self.open_selected_file(self.document_list))
+        delete_button = QPushButton("Remove Selected"); delete_button.clicked.connect(lambda: self.delete_selected_document())
+        buttons.addWidget(add_button); buttons.addWidget(open_button); buttons.addWidget(delete_button)
+        layout.addWidget(self.document_list); layout.addLayout(buttons); widget.setLayout(layout); return widget
+
     def _price_history_tab(self):
         widget = QWidget(); layout = QVBoxLayout()
         listing = self.property_.listings[0] if self.property_.listings else None
@@ -155,6 +190,37 @@ class PropertyWorkspace(QDialog):
         for label, field in [("Pros", self.pros), ("Cons", self.cons), ("Questions", self.questions), ("Builder Notes", self.builder_notes), ("Final Recommendation", self.final_recommendation)]:
             form.addRow(label, field)
         widget.setLayout(form); return widget
+
+    def add_photo(self):
+        path_text, _ = QFileDialog.getOpenFileName(self, "Add Photo", "", "Images (*.png *.jpg *.jpeg *.webp *.heic);;All Files (*)")
+        if path_text:
+            self.file_service.add_photo(self.property_id, Path(path_text))
+            QMessageBox.information(self, "Photo Added", "Photo added. Reopen workspace to refresh the list.")
+
+    def add_document(self):
+        path_text, _ = QFileDialog.getOpenFileName(self, "Add Document", "", "Documents (*.pdf *.docx *.xlsx *.png *.jpg *.jpeg);;All Files (*)")
+        if path_text:
+            self.file_service.add_document(self.property_id, Path(path_text))
+            QMessageBox.information(self, "Document Added", "Document added. Reopen workspace to refresh the list.")
+
+    def open_selected_file(self, list_widget):
+        selected = list_widget.selectedItems()
+        if not selected:
+            QMessageBox.information(self, "No Selection", "Please select a file.")
+            return
+        self.file_service.open_file(selected[0].data(1001))
+
+    def delete_selected_photo(self):
+        selected = self.photo_list.selectedItems()
+        if selected:
+            self.file_service.delete_photo(selected[0].data(1000))
+            QMessageBox.information(self, "Removed", "Photo reference removed. Reopen workspace to refresh.")
+
+    def delete_selected_document(self):
+        selected = self.document_list.selectedItems()
+        if selected:
+            self.file_service.delete_document(selected[0].data(1000))
+            QMessageBox.information(self, "Removed", "Document reference removed. Reopen workspace to refresh.")
 
     def _combo(self, values, current):
         combo = QComboBox(); combo.addItems(values); combo.setCurrentText(current); return combo

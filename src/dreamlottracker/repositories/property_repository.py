@@ -44,6 +44,8 @@ class PropertyRepository:
                     joinedload(Property.restrictions),
                     joinedload(Property.location_metrics),
                     joinedload(Property.financials),
+                    joinedload(Property.photos),
+                    joinedload(Property.documents),
                 )
                 .get(property_id)
             )
