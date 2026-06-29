@@ -37,7 +37,7 @@ class PropertiesPage(QWidget):
         edit_button = QPushButton("Quick Edit")
         edit_button.clicked.connect(self.edit_selected_property)
 
-        workspace_button = QPushButton("Open Workspace")
+        workspace_button = QPushButton("Open Dashboard")
         workspace_button.clicked.connect(self.open_selected_workspace)
 
         refresh_button = QPushButton("Refresh")
