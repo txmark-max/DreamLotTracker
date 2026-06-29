@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2">
+    <Document id="1">
+        <Style id="4">
+            <IconStyle id="5">
+                <color>ff0000ff</color>
+                <colorMode>normal</colorMode>
+                <scale>1</scale>
+                <heading>0</heading>
+                <Icon id="6">
+                    <href>http://maps.google.com/mapfiles/kml/pushpin/ylw-pushpin.png</href>
+                </Icon>
+            </IconStyle>
+        </Style>
+        <name>Dream Lot Tracker Properties</name>
+        <Placemark id="3">
+            <name>4541 Coral Cir (81.5)</name>
+            <description>Address: 4541 Coral Cir&lt;br&gt;City: Gulf Shores&lt;br&gt;Price: $10,000&lt;br&gt;Acres: 1.00&lt;br&gt;Status: Active&lt;br&gt;Dream Score: 81.5&lt;br&gt;Recommendation: Pass</description>
+            <styleUrl>#4</styleUrl>
+            <Point id="2">
+                <coordinates>123.0,88.0,0.0</coordinates>
+            </Point>
+        </Placemark>
+    </Document>
+</kml>
